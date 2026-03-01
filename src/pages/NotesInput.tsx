@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Brain, ArrowRight, Loader2, Upload, FileText, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Brain, ArrowRight, Loader2, Upload, FileText, X, Sparkles, FileUp, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,7 @@ const NotesInput = () => {
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -35,6 +36,32 @@ const NotesInput = () => {
       return;
     }
     setFile(selected);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const dropped = e.dataTransfer.files?.[0];
+    if (!dropped) return;
+    if (!ACCEPTED_TYPES.includes(dropped.type)) {
+      toast({ title: "Unsupported file", description: "Please upload a PDF or PowerPoint file.", variant: "destructive" });
+      return;
+    }
+    if (dropped.size > MAX_FILE_SIZE) {
+      toast({ title: "File too large", description: "Maximum file size is 10MB.", variant: "destructive" });
+      return;
+    }
+    setFile(dropped);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
   };
 
   const removeFile = () => {
@@ -88,84 +115,177 @@ const NotesInput = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <header className="px-6 py-4 flex items-center gap-2 max-w-4xl mx-auto w-full">
-        <Brain className="h-6 w-6 text-primary cursor-pointer" onClick={() => navigate("/")} />
-        <span className="font-display text-lg font-bold text-foreground cursor-pointer" onClick={() => navigate("/")}>Kai Notes</span>
-      </header>
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+    },
+  };
 
-      <main className="flex-1 flex items-start justify-center px-6 pt-8">
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-b from-background via-background to-accent/10">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 -left-32 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
+      </div>
+
+      <motion.header 
+        className="px-6 py-5 flex items-center gap-2.5 max-w-4xl mx-auto w-full relative z-10"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="flex items-center gap-2.5 group cursor-pointer" onClick={() => navigate("/")}>
+          <div className="relative">
+            <Brain className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
+            <Sparkles className="h-3 w-3 text-primary absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+          <span className="font-display text-lg font-bold text-foreground">Kai Notes</span>
+        </div>
+      </motion.header>
+
+      <main className="flex-1 flex items-start justify-center px-6 pt-6 pb-12 relative z-10">
         <motion.div
           className="w-full max-w-3xl"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Paste Your Notes or Upload a File</h1>
-          <p className="text-muted-foreground mb-6">
-            Paste study material below <strong>or</strong> upload a PDF / PowerPoint file and we'll generate a smart summary and quiz.
-          </p>
+          <motion.div variants={itemVariants} className="mb-8">
+            <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary px-3 py-1.5 rounded-full text-sm font-medium mb-4 backdrop-blur-sm">
+              <PenLine className="h-3.5 w-3.5" />
+              Step 1 of 3
+            </div>
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
+              <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                Add Your Study Material
+              </span>
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Upload a document <strong className="text-foreground/80">or</strong> paste your notes — we'll transform them into a smart summary and quiz.
+            </p>
+          </motion.div>
 
           {/* File Upload Area */}
-          <div
-            className="border-2 border-dashed border-border rounded-lg p-6 mb-4 text-center cursor-pointer hover:border-primary/50 transition-colors"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.ppt,.pptx"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            {file ? (
-              <div className="flex items-center justify-center gap-3">
-                <FileText className="h-8 w-8 text-primary" />
-                <div className="text-left">
-                  <p className="font-medium text-foreground">{file.name}</p>
-                  <p className="text-sm text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => { e.stopPropagation(); removeFile(); }}
-                  className="ml-2"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+          <motion.div variants={itemVariants}>
+            <div
+              className={`relative border-2 border-dashed rounded-2xl p-8 mb-6 text-center cursor-pointer transition-all duration-300 group ${
+                isDragging 
+                  ? "border-primary bg-primary/5 scale-[1.02]" 
+                  : file 
+                    ? "border-primary/50 bg-primary/5" 
+                    : "border-border hover:border-primary/50 hover:bg-accent/30"
+              }`}
+              onClick={() => fileInputRef.current?.click()}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.ppt,.pptx"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <AnimatePresence mode="wait">
+                {file ? (
+                  <motion.div 
+                    className="flex items-center justify-center gap-4"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    key="file-selected"
+                  >
+                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center">
+                      <FileText className="h-7 w-7 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-foreground">{file.name}</p>
+                      <p className="text-sm text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB • Ready to process</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => { e.stopPropagation(); removeFile(); }}
+                      className="ml-2 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    className="flex flex-col items-center gap-3"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    key="file-upload"
+                  >
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/10 to-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <FileUp className="h-8 w-8 text-primary/70 group-hover:text-primary transition-colors" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground mb-1">
+                        {isDragging ? "Drop your file here" : "Drag & drop or click to upload"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">PDF or PowerPoint • Max 10MB</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="flex items-center gap-4 mb-6">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+            <span className="text-sm text-muted-foreground font-medium px-2">or type your notes</span>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <div className="relative">
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Paste or type your study notes here... (minimum 50 characters)"
+                className="min-h-[220px] text-base resize-none rounded-2xl border-border/50 bg-card/50 backdrop-blur-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all duration-300 p-5"
+              />
+              <div className="absolute bottom-3 right-3 text-xs text-muted-foreground/60">
+                {notes.length} / 50 min
               </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                <Upload className="h-8 w-8" />
-                <p className="font-medium">Click to upload PDF or PowerPoint</p>
-                <p className="text-sm">Max 10MB</p>
-              </div>
-            )}
-          </div>
+            </div>
+          </motion.div>
 
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-sm text-muted-foreground">or paste your notes</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Paste your study notes here... (minimum 50 characters)"
-            className="min-h-[200px] text-base resize-none border-border bg-card focus:ring-primary"
-          />
-
-          <div className="flex items-center justify-between mt-4">
-            <span className="text-sm text-muted-foreground">
-              {file ? `File: ${file.name}` : `${notes.length} characters`}
-            </span>
+          <motion.div variants={itemVariants} className="flex items-center justify-between mt-6">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {file ? (
+                <span className="flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-full">
+                  <FileText className="h-4 w-4" />
+                  {file.name.length > 20 ? file.name.slice(0, 20) + "..." : file.name}
+                </span>
+              ) : notes.length >= 50 ? (
+                <span className="flex items-center gap-2 bg-green-500/10 text-green-600 px-3 py-1.5 rounded-full">
+                  <Sparkles className="h-4 w-4" />
+                  Ready to generate
+                </span>
+              ) : (
+                <span className="text-muted-foreground/60">
+                  Add content to continue
+                </span>
+              )}
+            </div>
             <Button
               size="lg"
               onClick={handleGenerate}
               disabled={loading || !canGenerate}
-              className="gap-2 font-display font-semibold"
+              className="gap-2 font-display font-semibold rounded-xl px-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 hover:scale-105 transition-all duration-300 disabled:shadow-none disabled:hover:scale-100"
             >
               {loading ? (
                 <>
@@ -179,27 +299,35 @@ const NotesInput = () => {
                 </>
               )}
             </Button>
-          </div>
+          </motion.div>
 
-          {loading && (
-            <motion.div
-              className="mt-8 flex flex-col items-center gap-3"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <div className="h-2 w-48 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-primary rounded-full"
-                  initial={{ width: "0%" }}
-                  animate={{ width: "100%" }}
-                  transition={{ duration: 12, ease: "linear" }}
-                />
-              </div>
-              <p className="text-sm text-muted-foreground animate-pulse-soft">
-                AI is reading your {file ? "document" : "notes"}…
-              </p>
-            </motion.div>
-          )}
+          <AnimatePresence>
+            {loading && (
+              <motion.div
+                className="mt-10 flex flex-col items-center gap-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <div className="relative w-64">
+                  <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-primary via-purple-500 to-primary rounded-full"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 12, ease: "linear" }}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                  <p className="animate-pulse">
+                    AI is reading your {file ? "document" : "notes"}…
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </main>
     </div>

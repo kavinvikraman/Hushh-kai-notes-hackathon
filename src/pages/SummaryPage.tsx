@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Brain, Play, Download, CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Brain, Play, Download, CheckCircle, Sparkles, BookOpen, ArrowRight, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,51 +78,111 @@ const SummaryPage = () => {
     doc.save("kai-notes-revision-sheet.pdf");
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+  };
+
   if (!summary) return null;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="px-6 py-4 flex items-center gap-2 max-w-4xl mx-auto w-full">
-        <Brain className="h-6 w-6 text-primary cursor-pointer" onClick={() => navigate("/")} />
-        <span className="font-display text-lg font-bold text-foreground cursor-pointer" onClick={() => navigate("/")}>Kai Notes</span>
-      </header>
+    <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-b from-background via-background to-accent/10">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-20 -right-20 w-64 h-64 bg-green-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -left-32 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
+      </div>
 
-      <main className="flex-1 px-6 pb-12">
+      <motion.header
+        className="px-6 py-5 flex items-center gap-2.5 max-w-4xl mx-auto w-full relative z-10"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="flex items-center gap-2.5 group cursor-pointer" onClick={() => navigate("/")}>
+          <div className="relative">
+            <Brain className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
+            <Sparkles className="h-3 w-3 text-primary absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+          <span className="font-display text-lg font-bold text-foreground">Kai Notes</span>
+        </div>
+      </motion.header>
+
+      <main className="flex-1 px-6 pb-12 relative z-10">
         <motion.div
           className="max-w-3xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-          <h1 className="font-display text-3xl font-bold text-foreground mb-1">{summary.title}</h1>
-          <p className="text-muted-foreground mb-6">Your smart summary — {summary.bullets.length} key points</p>
+          <motion.div variants={itemVariants} className="mb-8">
+            <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full text-sm font-medium mb-4 backdrop-blur-sm">
+              <BookOpen className="h-3.5 w-3.5" />
+              Step 2 of 3
+            </div>
+            <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">
+              <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                {summary.title}
+              </span>
+            </h1>
+            <p className="text-muted-foreground text-lg flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Your smart summary — <strong className="text-foreground">{summary.bullets.length} key points</strong>
+            </p>
+          </motion.div>
 
-          <div className="bg-card border border-border rounded-xl p-6 space-y-3 mb-6">
+          <motion.div
+            variants={itemVariants}
+            className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-8 space-y-4 mb-8 shadow-lg shadow-primary/5"
+          >
             {summary.bullets.map((b, i) => (
               <motion.div
                 key={i}
-                className="flex gap-3 items-start"
-                initial={{ opacity: 0, x: -10 }}
+                className="flex gap-4 items-start group"
+                initial={{ opacity: 0, x: -15 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
+                transition={{ delay: i * 0.06 + 0.2 }}
               >
-                <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                <p className="text-foreground">{b}</p>
+                <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                </div>
+                <p className="text-foreground leading-relaxed pt-0.5">{b}</p>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
 
-          <div className="flex items-center gap-2 flex-wrap text-sm mb-8">
-            <span className="text-muted-foreground">Key topics:</span>
-            {summary.keyTopics.map((t) => (
-              <span key={t} className="bg-accent text-accent-foreground px-3 py-1 rounded-full text-xs font-medium">
-                {t}
-              </span>
-            ))}
-          </div>
+          <motion.div variants={itemVariants} className="mb-10">
+            <p className="text-sm text-muted-foreground mb-3 font-medium">Key topics covered:</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {summary.keyTopics.map((t, i) => (
+                <motion.span
+                  key={t}
+                  className="bg-gradient-to-br from-primary/10 to-purple-500/10 border border-primary/20 text-primary px-4 py-2 rounded-full text-sm font-medium hover:scale-105 transition-transform cursor-default"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.05 + 0.4 }}
+                >
+                  {t}
+                </motion.span>
+              ))}
+            </div>
+          </motion.div>
 
-          <div className="flex gap-3 flex-wrap">
-            <Button onClick={handleStartQuiz} disabled={quizLoading} className="gap-2 font-display font-semibold">
+          <motion.div variants={itemVariants} className="flex gap-4 flex-wrap">
+            <Button
+              onClick={handleStartQuiz}
+              disabled={quizLoading}
+              size="lg"
+              className="gap-2 font-display font-semibold rounded-xl px-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 hover:scale-105 transition-all duration-300 disabled:shadow-none disabled:hover:scale-100"
+            >
               {quizLoading ? (
                 <>
                   <span className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
@@ -131,13 +191,45 @@ const SummaryPage = () => {
               ) : (
                 <>
                   <Play className="h-4 w-4" /> Start Quiz
+                  <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </Button>
-            <Button variant="outline" onClick={handleDownloadPDF} className="gap-2 font-display">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleDownloadPDF}
+              className="gap-2 font-display rounded-xl hover:scale-105 transition-all duration-300"
+            >
               <Download className="h-4 w-4" /> Download PDF
             </Button>
-          </div>
+          </motion.div>
+
+          <AnimatePresence>
+            {quizLoading && (
+              <motion.div
+                className="mt-10 flex flex-col items-center gap-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <div className="relative w-64">
+                  <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-primary via-purple-500 to-primary rounded-full"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 15, ease: "linear" }}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Brain className="h-4 w-4 text-primary animate-pulse" />
+                  <p className="animate-pulse">AI is generating your quiz…</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </main>
     </div>
