@@ -3,9 +3,9 @@
  * Handles all classroom-related API calls
  */
 
-// Use production URL when deployed, localhost for development
+// Use relative paths in production (same origin), localhost for development
 const API_BASE = import.meta.env.PROD 
-  ? 'https://hushh-kai-notes-hackathon.onrender.com' 
+  ? '' 
   : 'http://localhost:3001';
 
 export interface Student {

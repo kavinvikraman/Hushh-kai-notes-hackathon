@@ -1,25 +1,22 @@
 /**
  * Kai Notes - Classroom Mode Backend Server
  * Express server with in-memory storage for classroom management
+ * Also serves the React frontend in production
  */
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware - Allow requests from Vercel frontend
-app.use(cors({
-  origin: [
-    'http://localhost:8080',
-    'http://localhost:5173',
-    'https://kai-notes-lg10y2akf-kavin-vikramans-projects.vercel.app',
-    /\.vercel\.app$/  // Allow all Vercel preview deployments
-  ],
-  credentials: true
-}));
+// Middleware
+app.use(cors());
 app.use(express.json());
+
+// Serve static files from the React app build
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // ============================================
 // IN-MEMORY STORAGE
@@ -280,14 +277,23 @@ app.get('/health', (req, res) => {
 });
 
 // ============================================
+// SERVE REACT FRONTEND (Catch-all for SPA routing)
+// ============================================
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+// ============================================
 // START SERVER
 // ============================================
 
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════════════╗
-║     🎓 Kai Notes Classroom Server Running       ║
+║     🎓 Kai Notes Server Running                 ║
 ║     http://localhost:${PORT}                        ║
+║     Frontend + API served from same origin      ║
 ╚══════════════════════════════════════════════════╝
   `);
 });
