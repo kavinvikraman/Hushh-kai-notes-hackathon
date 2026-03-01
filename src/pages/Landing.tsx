@@ -156,13 +156,6 @@ const Landing = () => {
           </motion.div>
         </motion.div>
       </main>
-
-      {/* Footer */}
-      <footer className="px-6 py-6 text-center relative z-10">
-        <p className="text-sm text-muted-foreground/60">
-          Built with AI to help you study smarter
-        </p>
-      </footer>
     </div>
   );
 };
