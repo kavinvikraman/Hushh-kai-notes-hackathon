@@ -32,10 +32,16 @@ const SummaryPage = () => {
     setQuizLoading(true);
     try {
       const notes = sessionStorage.getItem("kai_notes");
-      if (!notes) throw new Error("Notes not found");
-      const { data, error } = await supabase.functions.invoke("generate-notes", {
-        body: { notes, type: "quiz" },
-      });
+      const fileBase64 = sessionStorage.getItem("kai_file");
+      const fileMime = sessionStorage.getItem("kai_fileMime");
+      if (!notes && !fileBase64) throw new Error("Notes not found");
+      const body: Record<string, any> = { type: "quiz" };
+      if (notes) body.notes = notes;
+      if (fileBase64 && fileMime) {
+        body.file = fileBase64;
+        body.fileMimeType = fileMime;
+      }
+      const { data, error } = await supabase.functions.invoke("generate-notes", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       sessionStorage.setItem("kai_quiz", JSON.stringify(data));
