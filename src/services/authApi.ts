@@ -3,10 +3,10 @@
  * Handles all authentication-related API calls
  */
 
-// Your backend URL - use localhost for dev, Render URL for production
+// Your backend URL - use localhost for dev, relative path for production (proxied via vercel.json)
 const API_BASE = import.meta.env.DEV 
   ? "http://localhost:3001" 
-  : "https://hushh-kai-notes-hackathon.onrender.com";
+  : "";
 
 // Response types
 export interface User {

@@ -3,10 +3,10 @@
  * Handles all classroom-related API calls
  */
 
-// Use localhost for dev, Render URL for production
+// Use localhost for dev, relative path for production (Vercel proxy)
 const API_BASE = import.meta.env.DEV 
   ? "http://localhost:3001" 
-  : "https://hushh-kai-notes-hackathon.onrender.com";
+  : "";
 
 export interface Student {
   name: string;

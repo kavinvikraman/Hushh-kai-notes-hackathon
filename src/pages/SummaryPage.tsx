@@ -7,9 +7,10 @@ import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 
 // API base URL
+// In production on Vercel, use relative path (proxied via vercel.json)
 const API_BASE = import.meta.env.DEV 
   ? "http://localhost:3001" 
-  : "https://hushh-kai-notes-hackathon.onrender.com";
+  : "";
 
 interface Summary {
   title: string;

@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getLeaderboard, LeaderboardEntry } from "@/lib/classroomApi";
 
-// API base URL
+// API base URL - relative path in production for Vercel proxy
 const API_BASE = import.meta.env.DEV 
   ? "http://localhost:3001" 
-  : "https://hushh-kai-notes-hackathon.onrender.com";
+  : "";
 
 const ClassroomDashboard = () => {
   const navigate = useNavigate();

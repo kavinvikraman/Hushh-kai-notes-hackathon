@@ -1,0 +1,32 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://hushh-kai-notes-hackathon.onrender.com/api/:path*"
+    },
+    {
+      "source": "/create-classroom",
+      "destination": "https://hushh-kai-notes-hackathon.onrender.com/create-classroom"
+    },
+    {
+      "source": "/join-classroom",
+      "destination": "https://hushh-kai-notes-hackathon.onrender.com/join-classroom"
+    },
+    {
+      "source": "/submit-quiz",
+      "destination": "https://hushh-kai-notes-hackathon.onrender.com/submit-quiz"
+    },
+    {
+      "source": "/leaderboard/:code",
+      "destination": "https://hushh-kai-notes-hackathon.onrender.com/leaderboard/:code"
+    },
+    {
+      "source": "/classroom/:code",
+      "destination": "https://hushh-kai-notes-hackathon.onrender.com/classroom/:code"
+    },
+    {
+      "source": "/health",
+      "destination": "https://hushh-kai-notes-hackathon.onrender.com/health"
+    }
+  ]
+}

@@ -7,9 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 // API base URL for generate-notes
+// In production on Vercel, use relative path (proxied via vercel.json)
+// In dev, use localhost
 const API_BASE = import.meta.env.DEV 
   ? "http://localhost:3001" 
-  : "https://hushh-kai-notes-hackathon.onrender.com";
+  : "";
 
 const ACCEPTED_TYPES = [
   "application/pdf",
