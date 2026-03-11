@@ -5,7 +5,11 @@ import { Brain, ArrowRight, Loader2, Upload, FileText, X, Sparkles, FileUp, PenL
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+
+// API base URL for generate-notes
+const API_BASE = import.meta.env.DEV 
+  ? "http://localhost:3001" 
+  : "https://hushh-kai-notes-hackathon.onrender.com";
 
 const ACCEPTED_TYPES = [
   "application/pdf",
@@ -96,16 +100,20 @@ const NotesInput = () => {
       }
       if (notes.trim()) body.notes = notes.trim();
 
-      const { data, error } = await supabase.functions.invoke("generate-notes", { body });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const response = await fetch(`${API_BASE}/api/generate-notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to generate summary');
 
-      sessionStorage.setItem("kai_notes", notes.trim() || `[Uploaded: ${file?.name}]`);
-      sessionStorage.setItem("kai_summary", JSON.stringify(data));
+      sessionStorage.setItem("classnexus_notes", notes.trim() || `[Uploaded: ${file?.name}]`);
+      sessionStorage.setItem("classnexus_summary", JSON.stringify(data));
       if (file) {
         // Store file info so quiz can re-use
-        sessionStorage.setItem("kai_file", body.file);
-        sessionStorage.setItem("kai_fileMime", body.fileMimeType);
+        sessionStorage.setItem("classnexus_file", body.file);
+        sessionStorage.setItem("classnexus_fileMime", body.fileMimeType);
       }
       navigate("/summary");
     } catch (e: any) {
@@ -147,7 +155,7 @@ const NotesInput = () => {
             <Brain className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
             <Sparkles className="h-3 w-3 text-primary absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="font-display text-lg font-bold text-foreground">Kai Notes</span>
+          <span className="font-display text-lg font-bold text-foreground">ClassNexus</span>
         </div>
       </motion.header>
 

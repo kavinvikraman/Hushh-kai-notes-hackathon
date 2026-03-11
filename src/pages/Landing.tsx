@@ -1,10 +1,13 @@
 import { motion } from "framer-motion";
-import { BookOpen, Brain, Zap, Sparkles, ArrowRight, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { BookOpen, Brain, Zap, Sparkles, ArrowRight, Users, LogIn } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { isAuthenticated, getUser } from "@/services/authApi";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const authenticated = isAuthenticated();
+  const user = getUser();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -33,7 +36,7 @@ const Landing = () => {
     {
       icon: Brain,
       title: "AI Quizzes",
-      desc: "20 MCQ questions generated from your content.",
+      desc: "10 MCQ questions generated from your content.",
       gradient: "from-purple-500/20 to-pink-500/20",
       iconColor: "text-purple-500",
     },
@@ -68,8 +71,47 @@ const Landing = () => {
             <Sparkles className="h-3 w-3 text-primary absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <span className="font-display text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-            Kai Notes
+            ClassNexus
           </span>
+        </div>
+        
+        {/* Auth Buttons */}
+        <div className="flex items-center gap-3">
+          {authenticated ? (
+            <>
+              <span className="text-sm text-muted-foreground hidden sm:block">
+                Hi, {user?.name?.split(' ')[0]}
+              </span>
+              <Button
+                variant="default"
+                size="sm"
+                className="rounded-full"
+                onClick={() => navigate("/notes")}
+              >
+                Go to App
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-full"
+                onClick={() => navigate("/login")}
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                Log In
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="rounded-full"
+                onClick={() => navigate("/signup")}
+              >
+                Sign Up
+              </Button>
+            </>
+          )}
         </div>
       </motion.header>
 
@@ -116,7 +158,7 @@ const Landing = () => {
             <Button
               size="lg"
               className="text-lg px-10 py-7 rounded-2xl font-display font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-105 transition-all duration-300 group"
-              onClick={() => navigate("/notes")}
+              onClick={() => navigate(authenticated ? "/notes" : "/signup")}
             >
               Get Started
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -125,7 +167,7 @@ const Landing = () => {
               size="lg"
               variant="outline"
               className="text-lg px-10 py-7 rounded-2xl font-display font-semibold hover:scale-105 transition-all duration-300 group border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
-              onClick={() => navigate("/classroom")}
+              onClick={() => navigate(authenticated ? "/classroom" : "/login")}
             >
               <Users className="mr-2 h-5 w-5 text-purple-500" />
               Classroom Mode

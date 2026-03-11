@@ -5,7 +5,11 @@ import { Brain, Sparkles, Users, Play, Trophy, ArrowRight, Clock, FileText, Load
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getLeaderboard, LeaderboardEntry } from "@/lib/classroomApi";
-import { supabase } from "@/integrations/supabase/client";
+
+// API base URL
+const API_BASE = import.meta.env.DEV 
+  ? "http://localhost:3001" 
+  : "https://hushh-kai-notes-hackathon.onrender.com";
 
 const ClassroomDashboard = () => {
   const navigate = useNavigate();
@@ -51,8 +55,8 @@ const ClassroomDashboard = () => {
 
   const handleStartQuiz = async () => {
     // Check if user has notes in session
-    const existingNotes = sessionStorage.getItem("kai_notes");
-    const existingQuiz = sessionStorage.getItem("kai_quiz");
+    const existingNotes = sessionStorage.getItem("classnexus_notes");
+    const existingQuiz = sessionStorage.getItem("classnexus_quiz");
     
     if (existingQuiz) {
       // Quiz already exists, go to classroom quiz
@@ -73,9 +77,9 @@ const ClassroomDashboard = () => {
     // Generate quiz from existing notes
     setQuizLoading(true);
     try {
-      const notes = sessionStorage.getItem("kai_notes");
-      const fileBase64 = sessionStorage.getItem("kai_file");
-      const fileMime = sessionStorage.getItem("kai_fileMime");
+      const notes = sessionStorage.getItem("classnexus_notes");
+      const fileBase64 = sessionStorage.getItem("classnexus_file");
+      const fileMime = sessionStorage.getItem("classnexus_fileMime");
       
       const body: Record<string, any> = { type: "quiz" };
       if (notes) body.notes = notes;
@@ -84,11 +88,15 @@ const ClassroomDashboard = () => {
         body.fileMimeType = fileMime;
       }
       
-      const { data, error } = await supabase.functions.invoke("generate-notes", { body });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const response = await fetch(`${API_BASE}/api/generate-notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to generate quiz');
       
-      sessionStorage.setItem("kai_quiz", JSON.stringify(data));
+      sessionStorage.setItem("classnexus_quiz", JSON.stringify(data));
       navigate("/classroom/quiz");
     } catch (e: any) {
       toast({ title: "Error", description: e.message || "Failed to generate quiz", variant: "destructive" });
@@ -137,7 +145,7 @@ const ClassroomDashboard = () => {
             <Brain className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
             <Sparkles className="h-3 w-3 text-primary absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="font-display text-lg font-bold text-foreground">Kai Notes</span>
+          <span className="font-display text-lg font-bold text-foreground">ClassNexus</span>
         </div>
         <div className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-purple-500 px-3 py-1.5 rounded-full text-sm font-medium">
           <Users className="h-4 w-4" />

@@ -1,19 +1,32 @@
 /**
- * Kai Notes - Classroom Mode Backend Server
+ * ClassNexus - Classroom Mode Backend Server
  * Express server with in-memory storage for classroom management
  * Also serves the React frontend in production
  */
+
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
+// Import auth routes
+const authRoutes = require('./routes/auth');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: true, // Allow all origins
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json({ limit: '50mb' }));
+
+// Authentication routes
+app.use('/api/auth', authRoutes);
 
 // Serve static files from the React app build
 app.use(express.static(path.join(__dirname, '../dist')));
@@ -277,6 +290,208 @@ app.get('/health', (req, res) => {
 });
 
 // ============================================
+// AI GENERATE NOTES ENDPOINT
+// ============================================
+
+/**
+ * POST /api/generate-notes
+ * Generate summary or quiz from notes using Google Gemini API
+ * Body: { type: "summary" | "quiz", notes: "...", file?: base64, fileMimeType?: string }
+ */
+app.post('/api/generate-notes', async (req, res) => {
+  try {
+    const { type, notes, file, fileMimeType } = req.body;
+    
+    if (!type || !['summary', 'quiz'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid type. Use "summary" or "quiz"' });
+    }
+    
+    if (!notes && !file) {
+      return res.status(400).json({ error: 'Please provide notes or a file' });
+    }
+
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    
+    // If no API key or placeholder, return mock data for development
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === 'your_gemini_api_key_here') {
+      console.log('⚠️ No valid GEMINI_API_KEY set, returning mock data');
+      console.log('ℹ️ To enable AI: Add your key to server/.env file');
+      
+      if (type === 'summary') {
+        return res.json({
+          title: "Study Notes Summary",
+          bullets: [
+            "Key concept 1: Understanding the fundamentals of the topic",
+            "Key concept 2: Important terminology and definitions",
+            "Key concept 3: Core principles and their applications",
+            "Key concept 4: Common patterns and best practices",
+            "Key concept 5: Real-world examples and use cases",
+            "Key concept 6: Critical analysis and evaluation methods",
+            "Key concept 7: Connections to related topics",
+            "Key concept 8: Summary of main takeaways"
+          ],
+          keyTopics: ["Fundamentals", "Applications", "Best Practices"]
+        });
+      } else {
+        return res.json({
+          questions: [
+            { question: "What is the primary purpose of this concept?", options: ["Option A", "Option B", "Option C", "Option D"], correctIndex: 0, topic: "Fundamentals" },
+            { question: "Which of the following best describes the key principle?", options: ["Principle 1", "Principle 2", "Principle 3", "Principle 4"], correctIndex: 1, topic: "Principles" },
+            { question: "In what scenario would you apply this concept?", options: ["Scenario A", "Scenario B", "Scenario C", "Scenario D"], correctIndex: 2, topic: "Applications" },
+            { question: "What is the relationship between these elements?", options: ["Direct", "Inverse", "Independent", "Correlated"], correctIndex: 0, topic: "Relationships" },
+            { question: "Which method is most effective for this purpose?", options: ["Method 1", "Method 2", "Method 3", "Method 4"], correctIndex: 3, topic: "Methods" },
+            { question: "What is a common misconception about this topic?", options: ["Misconception A", "Misconception B", "Misconception C", "All of the above"], correctIndex: 1, topic: "Common Errors" },
+            { question: "How does this concept impact the overall system?", options: ["Positively", "Negatively", "No impact", "Depends on context"], correctIndex: 3, topic: "Impact" },
+            { question: "What prerequisite knowledge is required?", options: ["Basic math", "Programming", "Statistics", "None"], correctIndex: 2, topic: "Prerequisites" },
+            { question: "Which tool is best suited for this application?", options: ["Tool A", "Tool B", "Tool C", "Tool D"], correctIndex: 0, topic: "Tools" },
+            { question: "What is the expected outcome of applying this principle?", options: ["Outcome A", "Outcome B", "Outcome C", "Outcome D"], correctIndex: 1, topic: "Outcomes" }
+          ]
+        });
+      }
+    }
+
+    // Build prompt for Gemini
+    let prompt = '';
+    
+    if (type === 'summary') {
+      prompt = `You are a study assistant. Analyze the student's notes provided below and create a concise, accurate summary.
+
+IMPORTANT: Generate content based ONLY on the actual notes provided. Do NOT make up or add generic content.
+
+Return your response as valid JSON with this exact structure:
+{
+  "title": "A specific title based on the actual topic of the notes",
+  "bullets": ["bullet 1", "bullet 2", ...],
+  "keyTopics": ["topic1", "topic2", ...]
+}
+
+Rules:
+- bullets: Create exactly 8-10 bullet points capturing key concepts FROM the notes
+- keyTopics: Extract 3-5 actual topic names from the notes
+- Everything must come directly from the provided material
+
+Here are the student's notes to analyze:
+
+${notes}
+
+Return ONLY the JSON object, no other text.`;
+    } else {
+      prompt = `You are a quiz generator for students. Analyze the study notes provided below and generate EXACTLY 10 multiple-choice questions.
+
+CRITICAL RULES:
+1. Every question MUST be directly answerable from the provided notes
+2. Questions should test understanding of the ACTUAL concepts in the notes
+3. Do NOT create generic or made-up questions
+4. Each question must have exactly 4 options with exactly ONE correct answer
+5. Correct answers must be based on facts FROM the notes
+
+Return your response as valid JSON with this exact structure:
+{
+  "questions": [
+    {
+      "question": "A specific question about the notes content",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctIndex": 0,
+      "topic": "Actual topic from notes"
+    }
+  ]
+}
+
+Here are the student's notes to analyze:
+
+${notes}
+
+Generate exactly 10 questions based ONLY on the content above. Return ONLY the JSON object, no other text.`;
+    }
+
+    // Build request parts for Gemini
+    const parts = [];
+    
+    // Add file if provided (for multimodal)
+    if (file && fileMimeType) {
+      parts.push({
+        inlineData: {
+          mimeType: fileMimeType,
+          data: file
+        }
+      });
+      parts.push({
+        text: notes 
+          ? `Additional context from notes:\n${notes}\n\n${prompt}`
+          : prompt
+      });
+    } else {
+      parts.push({ text: prompt });
+    }
+
+    // Call Google Gemini API
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: parts
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error:', response.status, errorText);
+      
+      if (response.status === 400) {
+        return res.status(500).json({ error: 'Invalid request to Gemini API. Check your API key.' });
+      } else if (response.status === 403) {
+        return res.status(500).json({ error: 'Gemini API key is invalid or disabled.' });
+      } else if (response.status === 429) {
+        return res.status(429).json({ error: 'Rate limit exceeded, please try again later.' });
+      }
+      
+      return res.status(500).json({ error: 'AI processing failed. Check server logs.' });
+    }
+
+    const data = await response.json();
+    
+    // Extract text from Gemini response
+    const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!textContent) {
+      console.error('No content in Gemini response:', JSON.stringify(data));
+      return res.status(500).json({ error: 'No response from AI' });
+    }
+
+    // Parse JSON from the response (handle markdown code blocks)
+    let jsonStr = textContent.trim();
+    if (jsonStr.startsWith('```json')) {
+      jsonStr = jsonStr.slice(7);
+    } else if (jsonStr.startsWith('```')) {
+      jsonStr = jsonStr.slice(3);
+    }
+    if (jsonStr.endsWith('```')) {
+      jsonStr = jsonStr.slice(0, -3);
+    }
+    jsonStr = jsonStr.trim();
+
+    const result = JSON.parse(jsonStr);
+    
+    console.log(`✅ Generated ${type} successfully using Google Gemini`);
+    res.json(result);
+    
+  } catch (error) {
+    console.error('Error generating notes:', error);
+    res.status(500).json({ error: 'Failed to generate content: ' + error.message });
+  }
+});
+
+// ============================================
 // SERVE REACT FRONTEND (Catch-all for SPA routing)
 // ============================================
 
@@ -291,7 +506,7 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════════════╗
-║     🎓 Kai Notes Server Running                 ║
+║     🎓 ClassNexus Server Running                ║
 ║     http://localhost:${PORT}                        ║
 ║     Frontend + API served from same origin      ║
 ╚══════════════════════════════════════════════════╝

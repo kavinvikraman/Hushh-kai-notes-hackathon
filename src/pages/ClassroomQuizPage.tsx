@@ -29,7 +29,7 @@ const ClassroomQuizPage = () => {
   const studentName = sessionStorage.getItem("kai_student_name");
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("kai_quiz");
+    const raw = sessionStorage.getItem("classnexus_quiz");
     if (!raw || !classroomCode || !studentName) { 
       navigate("/classroom/dashboard"); 
       return; 
@@ -118,7 +118,7 @@ const ClassroomQuizPage = () => {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2.5">
             <Brain className="h-7 w-7 text-primary" />
-            <span className="font-display text-lg font-bold text-foreground">Kai Notes</span>
+            <span className="font-display text-lg font-bold text-foreground">ClassNexus</span>
           </div>
           <div className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-purple-500 px-3 py-1 rounded-full text-xs font-medium">
             <Users className="h-3 w-3" />

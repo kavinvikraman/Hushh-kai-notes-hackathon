@@ -19,7 +19,7 @@ const ResultsPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const qRaw = sessionStorage.getItem("kai_quiz");
+    const qRaw = sessionStorage.getItem("classnexus_quiz");
     const aRaw = sessionStorage.getItem("kai_answers");
     const eRaw = sessionStorage.getItem("kai_elapsed");
     if (!qRaw || !aRaw) { navigate("/notes"); return; }
@@ -103,7 +103,7 @@ const ResultsPage = () => {
             <Brain className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
             <Sparkles className="h-3 w-3 text-primary absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="font-display text-lg font-bold text-foreground">Kai Notes</span>
+          <span className="font-display text-lg font-bold text-foreground">ClassNexus</span>
         </div>
       </motion.header>
 

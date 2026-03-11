@@ -25,7 +25,7 @@ const ClassroomResultsPage = () => {
   const studentName = sessionStorage.getItem("kai_student_name");
 
   useEffect(() => {
-    const qRaw = sessionStorage.getItem("kai_quiz");
+    const qRaw = sessionStorage.getItem("classnexus_quiz");
     const aRaw = sessionStorage.getItem("kai_answers");
     const eRaw = sessionStorage.getItem("kai_elapsed");
     
@@ -126,7 +126,7 @@ const ClassroomResultsPage = () => {
             <Brain className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
             <Sparkles className="h-3 w-3 text-primary absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="font-display text-lg font-bold text-foreground">Kai Notes</span>
+          <span className="font-display text-lg font-bold text-foreground">ClassNexus</span>
         </div>
         <div className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-purple-500 px-3 py-1.5 rounded-full text-sm font-medium">
           <Users className="h-4 w-4" />

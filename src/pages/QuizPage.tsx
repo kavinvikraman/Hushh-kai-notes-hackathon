@@ -12,7 +12,7 @@ interface Question {
   topic: string;
 }
 
-const QUIZ_TIME = 600; // 10 minutes for 20 questions
+const QUIZ_TIME = 300; // 5 minutes for 10 questions
 
 const QuizPage = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -23,7 +23,7 @@ const QuizPage = () => {
   const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("kai_quiz");
+    const raw = sessionStorage.getItem("classnexus_quiz");
     if (!raw) { navigate("/notes"); return; }
     const data = JSON.parse(raw);
     setQuestions(data.questions);
@@ -89,7 +89,7 @@ const QuizPage = () => {
             <Brain className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
             <Sparkles className="h-3 w-3 text-primary absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <span className="font-display text-lg font-bold text-foreground">Kai Notes</span>
+          <span className="font-display text-lg font-bold text-foreground">ClassNexus</span>
         </div>
         <motion.div
           className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${

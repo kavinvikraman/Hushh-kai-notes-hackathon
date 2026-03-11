@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: kai-notes
+    name: classnexus
     runtime: node
     buildCommand: npm install && npm run build
     startCommand: npm start

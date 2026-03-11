@@ -3,8 +3,10 @@
  * Handles all classroom-related API calls
  */
 
-// 🔥 Your live Render backend URL
-const API_BASE = "https://hushh-kai-notes-hackathon.onrender.com";
+// Use localhost for dev, Render URL for production
+const API_BASE = import.meta.env.DEV 
+  ? "http://localhost:3001" 
+  : "https://hushh-kai-notes-hackathon.onrender.com";
 
 export interface Student {
   name: string;

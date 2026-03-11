@@ -49,12 +49,12 @@ serve(async (req) => {
       });
       tool_choice = { type: "function", function: { name: "create_summary" } };
     } else if (type === "quiz") {
-      systemPrompt = `You are a quiz generator for students. Given study notes, generate exactly 20 multiple-choice questions. Each question must have exactly 4 options (A, B, C, D) with exactly one correct answer. Questions should test understanding, not just memorization. Cover different topics from the notes. Each question should be associated with a topic from the notes.`;
+      systemPrompt = `You are a quiz generator for students. Given study notes, generate exactly 10 multiple-choice questions. Each question must have exactly 4 options (A, B, C, D) with exactly one correct answer. Questions should test understanding, not just memorization. Cover different topics from the notes. Each question should be associated with a topic from the notes.`;
       tools.push({
         type: "function",
         function: {
           name: "create_quiz",
-          description: "Return a structured quiz with 20 MCQ questions",
+          description: "Return a structured quiz with 10 MCQ questions",
           parameters: {
             type: "object",
             properties: {
